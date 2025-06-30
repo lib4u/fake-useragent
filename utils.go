@@ -3,11 +3,12 @@ package fakeUserAgent
 import (
 	_ "embed"
 	"encoding/json"
+	"io"
 	"strconv"
 	"strings"
 	"time"
 
-	"math/rand"
+	"golang.org/x/exp/rand"
 )
 
 //go:embed userAgents.json
@@ -22,9 +23,9 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
-func Filter[E any](s *[]E, f func(E) bool) []E {
-	s2 := make([]E, 0, len(*s))
-	for _, e := range *s {
+func Filter[E any](s []E, f func(E) bool) []E {
+	s2 := make([]E, 0, len(s))
+	for _, e := range s {
 		if f(e) {
 			s2 = append(s2, e)
 		}
@@ -33,8 +34,7 @@ func Filter[E any](s *[]E, f func(E) bool) []E {
 }
 
 func randFromLen(n int) int {
-	source := rand.NewSource(int64(time.Now().UnixNano()))
-	rand.New(source)
+	rand.Seed(uint64(time.Now().UnixNano()))
 	randomInt := rand.Intn(n)
 	return randomInt
 }
@@ -48,10 +48,10 @@ func ExtractMajorVersion(version string) int {
 	return 0
 }
 
-func getUserAgents(data []byte) (*[]UserAgents, error) {
+func getUserAgents(r io.Reader) ([]UserAgents, error) {
 	var userAgents []UserAgents
-	if err := json.Unmarshal(data, &userAgents); err != nil {
+	if err := json.NewDecoder(r).Decode(&userAgents); err != nil {
 		return nil, err
 	}
-	return &userAgents, nil
+	return userAgents, nil
 }
