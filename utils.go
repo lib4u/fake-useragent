@@ -1,22 +1,17 @@
 package fakeUserAgent
 
 import (
+	_ "embed"
 	"encoding/json"
-	"io"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
-	"golang.org/x/exp/rand"
+	"math/rand"
 )
 
-func getPackageFilePath(filename string) string {
-	_, currentFile, _, _ := runtime.Caller(0)
-	return filepath.Join(filepath.Dir(currentFile), "src", filename)
-}
+//go:embed userAgents.json
+var userAgentsFile []byte
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
@@ -38,7 +33,8 @@ func Filter[E any](s *[]E, f func(E) bool) []E {
 }
 
 func randFromLen(n int) int {
-	rand.Seed(uint64(time.Now().UnixNano()))
+	source := rand.NewSource(int64(time.Now().UnixNano()))
+	rand.New(source)
 	randomInt := rand.Intn(n)
 	return randomInt
 }
@@ -52,17 +48,9 @@ func ExtractMajorVersion(version string) int {
 	return 0
 }
 
-func loadFile() (*os.File, error) {
-	file, err := os.Open(getPackageFilePath(userAgentsFile))
-	if err != nil {
-		return nil, err
-	}
-	return file, nil
-}
-
-func getUserAgents(r io.Reader) (*[]UserAgents, error) {
+func getUserAgents(data []byte) (*[]UserAgents, error) {
 	var userAgents []UserAgents
-	if err := json.NewDecoder(r).Decode(&userAgents); err != nil {
+	if err := json.Unmarshal(data, &userAgents); err != nil {
 		return nil, err
 	}
 	return &userAgents, nil

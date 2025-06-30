@@ -1,7 +1,5 @@
 package fakeUserAgent
 
-const userAgentsFile = "userAgents.json"
-
 // Browsers
 const (
 	Google           = "Google"
@@ -71,14 +69,9 @@ type UserAgents struct {
 	Platform                 string  `json:"platform"`
 }
 
-// Init UserAgent client and load user-Agents from JSON file to memory cache
+// Init UserAgent client and load user-Agents
 func New() (*UserAgent, error) {
-	file, err := loadFile()
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	userAgents, err := getUserAgents(file)
+	userAgents, err := getUserAgents(userAgentsFile)
 	if err != nil {
 		return nil, err
 	}
