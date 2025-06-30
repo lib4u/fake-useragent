@@ -1,11 +1,9 @@
 package fakeUserAgent
 
 import (
+	_ "embed"
 	"encoding/json"
 	"io"
-	"os"
-	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -13,10 +11,8 @@ import (
 	"golang.org/x/exp/rand"
 )
 
-func getPackageFilePath(filename string) string {
-	_, currentFile, _, _ := runtime.Caller(0)
-	return filepath.Join(filepath.Dir(currentFile), "src", filename)
-}
+//go:embed userAgents.json
+var userAgentsFile []byte
 
 func stringInSlice(a string, list []string) bool {
 	for _, b := range list {
@@ -27,9 +23,9 @@ func stringInSlice(a string, list []string) bool {
 	return false
 }
 
-func Filter[E any](s *[]E, f func(E) bool) []E {
-	s2 := make([]E, 0, len(*s))
-	for _, e := range *s {
+func Filter[E any](s []E, f func(E) bool) []E {
+	s2 := make([]E, 0, len(s))
+	for _, e := range s {
 		if f(e) {
 			s2 = append(s2, e)
 		}
@@ -52,18 +48,10 @@ func ExtractMajorVersion(version string) int {
 	return 0
 }
 
-func loadFile() (*os.File, error) {
-	file, err := os.Open(getPackageFilePath(userAgentsFile))
-	if err != nil {
-		return nil, err
-	}
-	return file, nil
-}
-
-func getUserAgents(r io.Reader) (*[]UserAgents, error) {
+func getUserAgents(r io.Reader) ([]UserAgents, error) {
 	var userAgents []UserAgents
 	if err := json.NewDecoder(r).Decode(&userAgents); err != nil {
 		return nil, err
 	}
-	return &userAgents, nil
+	return userAgents, nil
 }
