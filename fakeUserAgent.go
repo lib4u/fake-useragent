@@ -1,6 +1,6 @@
 package fakeUserAgent
 
-const userAgentsFile = "userAgents.json"
+import "bytes"
 
 // Browsers
 const (
@@ -48,7 +48,7 @@ const (
 )
 
 type UserAgent struct {
-	List     *[]UserAgents
+	List     []UserAgents
 	Filtered []UserAgents
 	fallback *string
 }
@@ -73,12 +73,9 @@ type UserAgents struct {
 
 // Init UserAgent client and load user-Agents from JSON file to memory cache
 func New() (*UserAgent, error) {
-	file, err := loadFile()
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	userAgents, err := getUserAgents(file)
+	var jsonreader = bytes.NewReader(userAgentsFile)
+
+	userAgents, err := getUserAgents(jsonreader)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +107,7 @@ func (c *UserAgent) SetFallback(fallback string) *UserAgent {
 // Gets from filters
 // Method return userAgent string only or empty string if nothing found
 func (c *FilterBy) Get() string {
-	filteredList := *c.getList()
+	filteredList := c.getList()
 	if len(filteredList) == 0 {
 		return *c.fallback
 	}
@@ -121,7 +118,7 @@ func (c *FilterBy) Get() string {
 // Gets from filters
 // Method return all struct UserAgents or empty UserAgents struct if nothing found
 func (c *FilterBy) GetRaw() UserAgents {
-	filteredList := *c.getList()
+	filteredList := c.getList()
 	if len(filteredList) == 0 {
 		return UserAgents{}
 	}
@@ -131,9 +128,9 @@ func (c *FilterBy) GetRaw() UserAgents {
 
 // Get filtered user-Agent list
 // Get from memory new filtered list
-func (c *FilterBy) getList() *[]UserAgents {
+func (c *FilterBy) getList() []UserAgents {
 	if c.UserAgent.Filtered != nil {
-		return &c.UserAgent.Filtered
+		return c.UserAgent.Filtered
 	}
 	return c.UserAgent.List
 }
